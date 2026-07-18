@@ -11,81 +11,11 @@ export interface AuthUser {
 
 const STORAGE_KEY = "hrms_auth_user";
 
-export const DEMO_USERS: Array<AuthUser & { password: string }> = [
-  {
-    id: "admin-1",
-    email: "admin@redfoxa.com",
-    password: "admin123",
-    firstName: "Admin",
-    lastName: "User",
-    role: "admin",
-  },
-  {
-    id: "cand-1",
-    email: "gayatri@redfoxa.com",
-    password: "candidate123",
-    firstName: "Gayatri",
-    lastName: "H",
-    role: "candidate",
-    crmAccess: true,
-  },
-  {
-    id: "cand-2",
-    email: "candidate@redfoxa.com",
-    password: "candidate123",
-    firstName: "Rahul",
-    lastName: "Sharma",
-    role: "candidate",
-    crmAccess: true,
-  },
-];
-
-export function login(
-  email: string,
-  password: string,
-  role: UserRole
-): AuthUser | null {
-  const found = DEMO_USERS.find(
-    (u) =>
-      u.email.toLowerCase() === email.toLowerCase() &&
-      u.password === password &&
-      u.role === role
-  );
-  if (!found) return null;
-  const user: AuthUser = {
-    id: found.id,
-    email: found.email,
-    firstName: found.firstName,
-    lastName: found.lastName,
-    role: found.role,
-    crmAccess: found.crmAccess,
-  };
+/** Persist the logged-in session (not credentials — those live in the DB). */
+export function setCurrentUser(user: AuthUser) {
   if (typeof window !== "undefined") {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
   }
-  return user;
-}
-
-export function signup(payload: {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  role: UserRole;
-}): AuthUser {
-  const user: AuthUser = {
-    id: `${payload.role}-${Date.now()}`,
-    email: payload.email,
-    firstName: payload.firstName,
-    lastName: payload.lastName,
-    role: payload.role,
-    crmAccess: payload.role === "candidate",
-  };
-  DEMO_USERS.push({ ...user, password: payload.password });
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  }
-  return user;
 }
 
 export function getCurrentUser(): AuthUser | null {

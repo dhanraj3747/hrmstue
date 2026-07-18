@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { computeCycle } from "@/lib/payroll-calc";
 
@@ -73,8 +74,8 @@ export async function POST(req: NextRequest) {
         aadhaarNumber: emp.aadhaarNumber,
         month: payroll.month,
         workedHours: payroll.workedHours,
-        earnings,
-        deductions,
+        earnings: earnings as unknown as Prisma.InputJsonValue,
+        deductions: deductions as unknown as Prisma.InputJsonValue,
         grossPay,
         totalDeductions,
         netPay,

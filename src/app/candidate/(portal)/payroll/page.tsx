@@ -19,7 +19,8 @@ export default function CandidatePayrollPage() {
     (async () => {
       try {
         const empRes = await fetch(`/api/employees?q=${encodeURIComponent(email)}`);
-        const empData = await empRes.json();
+        if (!empRes.ok) return;
+        const empData = await empRes.json().catch(() => ({ employees: [] }));
         const match = (empData.employees ?? []).find(
           (e: { email: string; id: number }) => e.email.toLowerCase() === email.toLowerCase()
         );

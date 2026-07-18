@@ -7,8 +7,8 @@ export type InvoiceStatus = "RED" | "GREEN" | "PURPLE";
 
 export const INVOICE_STATUS_LABEL: Record<InvoiceStatus, string> = {
   RED: "Not Generated",
-  GREEN: "Ready to Raise",
-  PURPLE: "Invoice Raised",
+  GREEN: "Invoice Generated",
+  PURPLE: "Ready to Raise",
 };
 
 function dayStart(d: Date): number {

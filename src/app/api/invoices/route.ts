@@ -15,7 +15,7 @@ export async function GET() {
 
   const invoices = rows.map((inv) => ({
     ...inv,
-    status: computeInvoiceStatus(inv.invoiceDate, inv.raised, today),
+    status: (inv.statusOverride as "RED" | "GREEN" | "PURPLE" | null) ?? computeInvoiceStatus(inv.invoiceDate, inv.raised, today),
   }));
 
   const summary = { today: 0, upcoming: 0, overdue: 0, raised: 0 };

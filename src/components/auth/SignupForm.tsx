@@ -1,9 +1,10 @@
 "use client";
 
 import { AuthCard } from "./AuthCard";
+import { PasswordInput } from "./PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { signup, UserRole } from "@/lib/auth";
+import { UserRole } from "@/lib/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -11,26 +12,42 @@ import { FormEvent, useState } from "react";
 export function SignupForm({
   role,
   loginHref,
-  redirectTo,
 }: {
   role: UserRole;
   loginHref: string;
-  redirectTo: string;
+  redirectTo?: string;
 }) {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const onSubmit = (e: FormEvent) => {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    setError("");
     setLoading(true);
-    signup({ firstName, lastName, email, password, role });
-    setLoading(false);
-    router.push(redirectTo);
-  };
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, email, password, role }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.errors?.email ?? data.errors?.password ?? data.errors?.firstName ?? data.error ?? "Failed to create account.");
+        return;
+      }
+      // Account stored in DB — send them to login.
+      router.push(`${loginHref}?registered=1`);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <AuthCard
@@ -41,39 +58,12 @@ export function SignupForm({
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Input
-            id="firstName"
-            label="First Name"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            required
-          />
-          <Input
-            id="lastName"
-            label="Last Name"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            required
-          />
+          <Input id="firstName" label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+          <Input id="lastName" label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
         </div>
-        <Input
-          id="email"
-          label="Email"
-          type="email"
-          placeholder="you@company.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Input
-          id="password"
-          label="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-        />
+        <Input id="email" label="Email" type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <PasswordInput id="password" label="Password" placeholder="At least 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+        {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Creating..." : "Create Account"}
         </Button>

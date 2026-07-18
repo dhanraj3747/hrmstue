@@ -61,13 +61,13 @@ export default function SelectedCandidatesPage() {
     }
   }
 
-  async function setRaised(inv: Invoice, raised: boolean) {
+  async function setStatus(inv: Invoice, statusOverride: string) {
     setBusy(inv.candidateRef);
     try {
       await fetch(`/api/invoices/${inv.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ raised }),
+        body: JSON.stringify({ statusOverride }),
       });
       await loadInvoices();
     } finally {
@@ -81,8 +81,8 @@ export default function SelectedCandidatesPage() {
         <h2 className="text-2xl font-bold text-gray-900">Selected Candidates</h2>
         <p className="text-sm text-gray-500">
           Candidates marked Selected in CRM. Track invoice status: <span className="font-semibold text-red-600">Red</span> not generated,{" "}
-          <span className="font-semibold text-emerald-600">Green</span> ready to raise,{" "}
-          <span className="font-semibold text-purple-600">Purple</span> raised.
+          <span className="font-semibold text-emerald-600">Green</span> invoice generated,{" "}
+          <span className="font-semibold text-purple-600">Purple</span> ready to raise.
         </p>
       </div>
 
@@ -123,12 +123,13 @@ export default function SelectedCandidatesPage() {
                   ) : (
                     <select
                       className="rounded-md border border-gray-200 px-2 py-1 text-sm"
-                      value={inv.raised ? "PURPLE" : "AUTO"}
+                      value={status}
                       disabled={busy === s.id}
-                      onChange={(e) => setRaised(inv, e.target.value === "PURPLE")}
+                      onChange={(e) => setStatus(inv, e.target.value)}
                     >
-                      <option value="AUTO">{status === "GREEN" ? "Ready (Green)" : "Not Generated (Red)"}</option>
-                      <option value="PURPLE">Invoice Raised (Purple)</option>
+                      <option value="RED">Red - Not Generated</option>
+                      <option value="GREEN">Green - Invoice Generated</option>
+                      <option value="PURPLE">Purple - Ready to Raise</option>
                     </select>
                   )}
                 </div>

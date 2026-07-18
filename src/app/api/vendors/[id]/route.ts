@@ -20,7 +20,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       data: {
         ...(body.company !== undefined ? { company: String(body.company) } : {}),
         ...(body.contactPerson !== undefined ? { contactPerson: body.contactPerson ? String(body.contactPerson) : null } : {}),
+        ...(body.contactEmail !== undefined ? { contactEmail: body.contactEmail ? String(body.contactEmail) : null } : {}),
+        ...(body.phone !== undefined ? { phone: body.phone ? String(body.phone) : null } : {}),
         ...(body.website !== undefined ? { website: body.website ? String(body.website) : null } : {}),
+        ...(body.agreementDate !== undefined ? { agreementDate: body.agreementDate ? new Date(String(body.agreementDate)) : null } : {}),
         ...(body.location !== undefined ? { location: body.location ? String(body.location) : null } : {}),
         ...(body.clauseDays !== undefined ? { clauseDays: Number(body.clauseDays) || 45 } : {}),
       },

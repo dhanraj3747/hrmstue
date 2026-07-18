@@ -13,8 +13,11 @@ interface VendorRow {
   id: number;
   company: string;
   contactPerson: string | null;
+  contactEmail: string | null;
+  phone: string | null;
   website: string | null;
   location: string | null;
+  agreementDate: string | null;
   clauseDays: number;
   documents: VendorDoc[];
 }
@@ -74,8 +77,11 @@ export default function VendorsPage() {
           <div className="space-y-5">
             <div className="grid gap-2 text-sm sm:grid-cols-2">
               <p><span className="font-semibold">Contact Person:</span> {detail.contactPerson || "-"}</p>
+              <p><span className="font-semibold">Contact Email:</span> {detail.contactEmail || "-"}</p>
+              <p><span className="font-semibold">Phone:</span> {detail.phone || "-"}</p>
               <p><span className="font-semibold">Website:</span> {detail.website || "-"}</p>
               <p><span className="font-semibold">Location:</span> {detail.location || "-"}</p>
+              <p><span className="font-semibold">Agreement Date:</span> {detail.agreementDate ? new Date(detail.agreementDate).toLocaleDateString("en-GB") : "-"}</p>
               <p><span className="font-semibold">Clause Days:</span> {detail.clauseDays}</p>
             </div>
             <DocumentManager

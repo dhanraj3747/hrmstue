@@ -101,3 +101,25 @@ Highlights:
 - **Vendors**: Company/Contact/Website/Location/Clause Days + document/agreement upload; Clause Date removed.
 - **Candidate dashboard**: CRM summary cards (Calls Today, Scheduled Interviews, Selected, Joined). Candidate payroll: Net Pay/Records/Bank removed. Candidate job openings: Clause Date removed.
 - **Admin dashboard**: CRM Activity cards, Invoice Reminders, HR Performance (click an HR to expand metrics), Employee Count & Live status.
+
+---
+
+# Update — Auth DB, Vendor contacts, Invoice status editor, bug fixes
+
+New model **User** (email, passwordHash, role, crmAccess). Vendor gained contactEmail/phone/agreementDate. Invoice gained statusOverride. Run:
+
+```bash
+npx prisma migrate dev --name auth_and_vendor_contacts
+npx prisma generate
+npx prisma db seed   # creates login accounts + demo data
+```
+
+Default logins (created by seed, stored hashed in the DB):
+- Admin: `admin@redfoxa.com` / `admin123`
+- Candidate: `gayatri@redfoxa.com` / `candidate123`
+
+Changes:
+- **Login/Signup (admin + candidate)**: real DB auth. Signup writes to the `user` table then redirects to login; login verifies credentials and shows "Invalid email or password" on mismatch. Password field has a show/hide eye toggle.
+- **Add Vendor**: Company, Contact Person, Contact Email, Phone, Website, Location, Agreement Date, Clause Days.
+- **Selected Candidates**: labels — RED "Not Generated", GREEN "Invoice Generated", PURPLE "Ready to Raise"; editable dropdown to set Red/Green/Purple per candidate (stored as `statusOverride`).
+- **Fix**: candidate Payroll "Unexpected end of JSON input" — response is now guarded (`res.ok` + safe JSON parse).

@@ -18,8 +18,11 @@ export async function POST(req: NextRequest) {
       data: {
         company,
         contactPerson: body.contactPerson ? String(body.contactPerson) : null,
+        contactEmail: body.contactEmail ? String(body.contactEmail) : null,
+        phone: body.phone ? String(body.phone) : null,
         website: body.website ? String(body.website) : null,
         location: body.location ? String(body.location) : null,
+        agreementDate: body.agreementDate ? new Date(String(body.agreementDate)) : null,
         clauseDays: Number(body.clauseDays) || 45,
       },
       include: { documents: true },

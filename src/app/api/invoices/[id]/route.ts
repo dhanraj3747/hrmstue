@@ -30,13 +30,21 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const raised = Boolean(body.raised);
+  const data: Record<string, unknown> = {};
+  if (body.statusOverride !== undefined) {
+    const so = body.statusOverride === null ? null : String(body.statusOverride);
+    data.statusOverride = so;
+    if (so === "PURPLE") { data.raised = true; data.raisedAt = new Date(); }
+    if (so === "RED" || so === "GREEN") { data.raised = false; data.raisedAt = null; }
+  }
+  if (body.raised !== undefined) {
+    data.raised = Boolean(body.raised);
+    data.raisedAt = body.raised ? new Date() : null;
+  }
   try {
-    const invoice = await prisma.invoice.update({
-      where: { id },
-      data: { raised, raisedAt: raised ? new Date() : null },
-    });
-    return NextResponse.json({ invoice: { ...invoice, status: computeInvoiceStatus(invoice.invoiceDate, invoice.raised) } });
+    const invoice = await prisma.invoice.update({ where: { id }, data });
+    const status = (invoice.statusOverride as "RED" | "GREEN" | "PURPLE" | null) ?? computeInvoiceStatus(invoice.invoiceDate, invoice.raised);
+    return NextResponse.json({ invoice: { ...invoice, status } });
   } catch (err) {
     console.error("PATCH /api/invoices/[id]", err);
     return NextResponse.json({ error: "Failed to update invoice." }, { status: 500 });

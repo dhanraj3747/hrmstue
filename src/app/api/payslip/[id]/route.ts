@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -61,8 +62,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         doj: body.doj !== undefined ? (body.doj ? new Date(String(body.doj)) : null) : undefined,
         invoiceDate: body.invoiceDate !== undefined ? (body.invoiceDate ? new Date(String(body.invoiceDate)) : null) : undefined,
         clauseDays: body.clauseDays !== undefined ? (body.clauseDays === "" || body.clauseDays === null ? null : Number(body.clauseDays)) : undefined,
-        earnings,
-        deductions,
+        earnings: earnings as unknown as Prisma.InputJsonValue,
+        deductions: deductions as unknown as Prisma.InputJsonValue,
         grossPay,
         totalDeductions,
         netPay,

@@ -146,6 +146,7 @@ model Invoice {
   invoiceDate   DateTime?
   raised        Boolean   @default(false)
   raisedAt      DateTime?
+  statusOverride String?  // RED, GREEN, PURPLE (manual)
   amount        Float?
   notes         String?
 
@@ -190,8 +191,11 @@ model Vendor {
   id            Int      @id @default(autoincrement())
   company       String
   contactPerson String?
+  contactEmail  String?
+  phone         String?
   website       String?
   location      String?
+  agreementDate DateTime?
   clauseDays    Int      @default(45)
 
   documents VendorDocument[]
@@ -240,4 +244,19 @@ model Candidate {
   updatedAt DateTime @updatedAt
 
   @@map("candidate")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         String   @default("candidate") // admin, candidate
+  crmAccess    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user")
 }
