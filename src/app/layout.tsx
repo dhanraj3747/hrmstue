@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Smart HRMS AI | RedFoxa Careerlink",
-  description: "HRMS Admin and Candidate portals for RedFoxa Careerlink",
+  title: "Smart HRMS AI | Redfoxa Careerlink",
+  description: "HRMS Admin and Candidate portals for Redfoxa Careerlink",
   icons: {
     icon: "/logo.jpeg",
     shortcut: "/logo.jpeg",
