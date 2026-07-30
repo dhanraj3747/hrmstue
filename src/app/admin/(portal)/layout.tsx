@@ -7,7 +7,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <PortalLayout
       navItems={adminNav}
-      portalLabel="RedFoxa Careerlink — Admin"
+      portalLabel="Redfoxa Careerlink — Admin"
       requiredRole="admin"
     >
       {children}
