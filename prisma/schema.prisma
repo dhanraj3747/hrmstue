@@ -108,6 +108,7 @@ model Payslip {
   employeeCode  String
   designation   String?
   department    String?
+  subDepartment String?
   doj           DateTime?
   bankName      String?
   accountNumber String?
@@ -197,6 +198,7 @@ model Vendor {
   location      String?
   agreementDate DateTime?
   clauseDays    Int      @default(45)
+  contacts      Json?
 
   documents VendorDocument[]
 
@@ -237,7 +239,9 @@ model Candidate {
   shortlisted   String    @default("No")
   interviewDate DateTime?
   doj           DateTime?
-  owner         String?   // HR who added
+  joiningStatus String?   // Joined, Not Joined, Yet to Join, Joined but Discontinued, Other
+  owner         String?   // HR who added (email)
+  ownerName     String?   // HR display name (snapshot)
   addedAt       DateTime  @default(now())
 
   createdAt DateTime @default(now())
@@ -259,4 +263,60 @@ model User {
   updatedAt DateTime @updatedAt
 
   @@map("user")
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  fromEmail String
+  fromName  String
+  fromRole  String // admin, candidate
+  toEmail   String
+  body      String   @db.Text
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([fromEmail])
+  @@index([toEmail])
+  @@map("message")
+}
+
+model JobOpening {
+  id         Int      @id @default(autoincrement())
+  role       String
+  company    String?
+  vendorId   Int?
+  process    String?
+  skills     String?
+  languages  String?
+  salary     String?
+  ctc        String?
+  takeHome   String?
+  location   String?
+  jd         String?  @db.Text
+  clauseDays Int      @default(45)
+  status     String   @default("Open")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("job_opening")
+}
+
+model Leave {
+  id         Int      @id @default(autoincrement())
+  employeeId Int?
+  email      String
+  name       String
+  fromDate   DateTime
+  toDate     DateTime
+  type       String   @default("Casual") // Sick, Casual, Earned, Other
+  reason     String?  @db.Text
+  status     String   @default("Pending") // Pending, Approved, Rejected
+  reviewedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@map("leave")
 }

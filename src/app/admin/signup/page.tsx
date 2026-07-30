@@ -1,13 +1,6 @@
-"use client";
-
-import { SignupForm } from "@/components/auth/SignupForm";
+import { redirect } from "next/navigation";
 
 export default function AdminSignupPage() {
-  return (
-    <SignupForm
-      role="admin"
-      loginHref="/admin/login"
-      redirectTo="/admin/dashboard"
-    />
-  );
+  // Admin self-signup is disabled. Admin accounts are managed internally.
+  redirect("/admin/login");
 }

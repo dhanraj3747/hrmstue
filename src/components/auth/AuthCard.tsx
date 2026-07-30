@@ -8,12 +8,14 @@ export function AuthCard({
   children,
   backHref = "/",
   backLabel = "Back to portal selection",
+  portal,
 }: {
   title: string;
   subtitle: string;
   children: React.ReactNode;
   backHref?: string;
   backLabel?: string;
+  portal?: "admin" | "candidate";
 }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-[#f3f4f6] px-4 py-10">
@@ -29,9 +31,22 @@ export function AuthCard({
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-auth sm:p-8">
         <div className="mb-6 flex flex-col items-center text-center">
           <Logo />
-          <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-            Smart HRMS  · Site Identity
-          </p>
+          {portal ? (
+            <span
+              className={
+                "mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider " +
+                (portal === "admin"
+                  ? "bg-brand-red/10 text-brand-red"
+                  : "bg-blue-50 text-blue-700")
+              }
+            >
+              {portal === "admin" ? "Admin Portal" : "Candidate Portal"}
+            </span>
+          ) : (
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Smart HRMS · Site Identity
+            </p>
+          )}
           <h1 className="mt-3 text-2xl font-bold text-gray-900">{title}</h1>
           <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
         </div>

@@ -5,7 +5,9 @@ export const metadata: Metadata = {
   title: "Smart HRMS AI | RedFoxa Careerlink",
   description: "HRMS Admin and Candidate portals for RedFoxa Careerlink",
   icons: {
-    icon: "/favicon-redfoxa.png",
+    icon: "/logo.jpeg",
+    shortcut: "/logo.jpeg",
+    apple: "/logo.jpeg",
   },
 };
 

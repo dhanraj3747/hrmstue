@@ -129,13 +129,7 @@ export default function PayslipEditPage() {
         </div>
       </Card>
 
-      <Card className="space-y-4">
-        <CardTitle>Invoice / Clause</CardTitle>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Input label="Invoice Date" type="date" value={ps.invoiceDate ? ps.invoiceDate.slice(0, 10) : ""} onChange={(e) => setField("invoiceDate", e.target.value)} />
-          <Input label="Clause Days" type="number" value={ps.clauseDays != null ? String(ps.clauseDays) : ""} onChange={(e) => setField("clauseDays", e.target.value === "" ? null : Number(e.target.value))} />
-        </div>
-      </Card>
+      
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="space-y-3">

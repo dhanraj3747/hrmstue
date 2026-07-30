@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const employeeId = req.nextUrl.searchParams.get("employeeId");
   const where = employeeId ? { employeeId: Number(employeeId) } : {};
-  const documents = await prisma.employeeDocument.findMany({ where, orderBy: { createdAt: "desc" } });
+  const documents = await prisma.employeeDocument.findMany({ where, orderBy: { createdAt: "desc" }, include: { employee: true } });
   return NextResponse.json({ documents });
 }
 

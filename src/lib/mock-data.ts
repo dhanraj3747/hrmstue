@@ -52,6 +52,7 @@ export type CRMCandidate = {
   remarks: string;
   itType?: string;
   qualification?: string;
+  joiningStatus?: string;
   calls: number;
   ctc: string;
   takeHome: string;

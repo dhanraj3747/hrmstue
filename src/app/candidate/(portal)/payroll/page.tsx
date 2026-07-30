@@ -7,7 +7,6 @@ import type { Payslip } from "@/types/payroll";
 import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const inr = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
 
 export default function CandidatePayrollPage() {
   const { name, email } = useUserLabel();
@@ -43,16 +42,15 @@ export default function CandidatePayrollPage() {
         </p>
       </div>
 
-      <Table headers={["Month", "Net Pay", "Status", "Payslip"]}>
+      <Table headers={["Month", "Status", "Payslip"]}>
         {loading ? (
-          <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+          <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
         ) : payslips.length === 0 ? (
-          <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400">No payslips available yet. They appear here once your admin approves payroll.</td></tr>
+          <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-400">No payslips available yet. They appear here once your admin approves payroll.</td></tr>
         ) : (
           payslips.map((p) => (
             <tr key={p.id} className="hover:bg-gray-50/80">
               <td className="px-4 py-3 font-medium">{p.month}</td>
-              <td className="px-4 py-3 font-semibold text-brand-red">{inr(p.netPay)}</td>
               <td className="px-4 py-3"><Badge tone="green">{p.status}</Badge></td>
               <td className="px-4 py-3">
                 <a

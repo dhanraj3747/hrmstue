@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { emptyEmployeeForm, toFormValues } from "@/lib/employee-form";
+import { employeeErrors } from "@/lib/validators";
 import { formatDate } from "@/lib/utils";
 import type { Employee, EmployeeInput } from "@/types/employee";
 import Link from "next/link";
@@ -55,6 +56,8 @@ function EmployeeDetail() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const clientErrors = employeeErrors(form);
+    if (Object.keys(clientErrors).length > 0) { setErrors(clientErrors); return; }
     setSaving(true);
     setSaved(false);
     setErrors({});
@@ -175,15 +178,13 @@ function EmployeeDetail() {
         </Card>
       )}
 
-      {!viewMode && (
-        <DocumentManager
-          title="Employee Documents"
-          endpoint="/api/employee-documents"
-          ownerKey="employeeId"
-          ownerId={emp.id}
-          categories={["Agreement", "Offer Letter", "Contract", "Other"]}
-        />
-      )}
+      <DocumentManager
+        title="Employee Documents"
+        endpoint="/api/employee-documents"
+        ownerKey="employeeId"
+        ownerId={emp.id}
+        categories={["Agreement", "Offer Letter", "Contract", "Aadhaar", "PAN", "Other"]}
+      />
     </div>
   );
 }

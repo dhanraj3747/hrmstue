@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
   const records = await prisma.attendance.findMany({
     where,
     orderBy: { date: "desc" },
+    include: { employee: true },
   });
 
   const totalWorkedMinutes = records.reduce((sum, r) => sum + (r.workedMinutes || 0), 0);
@@ -66,6 +67,16 @@ export async function POST(req: NextRequest) {
       : computeWorkedMinutes(loginAt, logoutAt, breakMinutes);
 
   const date = body.date ? new Date(String(body.date)) : new Date();
+
+  // Enforce ONE attendance record per employee per calendar day.
+  const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(date); dayEnd.setHours(23, 59, 59, 999);
+  const existing = await prisma.attendance.findFirst({
+    where: { employeeId, date: { gte: dayStart, lte: dayEnd } },
+  });
+  if (existing) {
+    return NextResponse.json({ error: "Attendance already recorded for today. Only one login is allowed per day." }, { status: 409 });
+  }
 
   try {
     const record = await prisma.attendance.create({

@@ -3,6 +3,8 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { getCurrentUser } from "@/lib/auth";
 import {
   LayoutDashboard,
   CalendarCheck,
@@ -32,7 +34,7 @@ export const candidateNav: NavItem[] = [
   { label: "Attendance", href: "/candidate/attendance", icon: CalendarCheck },
   { label: "Leaves", href: "/candidate/leaves", icon: Clock3 },
   { label: "Payroll", href: "/candidate/payroll", icon: Wallet },
-  { label: "Messages", href: "/candidate/messages", icon: MessageSquare, badge: 1 },
+  { label: "Messages", href: "/candidate/messages", icon: MessageSquare },
   { label: "CRM", href: "/candidate/crm", icon: Crosshair },
   { label: "Job Openings", href: "/candidate/job-openings", icon: Briefcase },
 ];
@@ -40,6 +42,7 @@ export const candidateNav: NavItem[] = [
 export const adminNav: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Employees", href: "/admin/employees", icon: Users },
+  { label: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
   { label: "Documents", href: "/admin/documents", icon: FileText },
   { label: "CRM Access", href: "/admin/crm-access", icon: ToggleLeft },
   { label: "Leaves", href: "/admin/leaves", icon: Clock3 },
@@ -47,6 +50,7 @@ export const adminNav: NavItem[] = [
   { label: "Job Openings", href: "/admin/job-openings", icon: Briefcase },
   { label: "Payroll", href: "/admin/payroll", icon: Wallet },
   { label: "Selected", href: "/admin/selected-candidates", icon: UserCheck },
+  { label: "Messages", href: "/admin/messages", icon: MessageSquare },
 ];
 
 export function Sidebar({
@@ -56,6 +60,28 @@ export function Sidebar({
   items: NavItem[];
   portalLabel: string;
 }) {
+  const [unread, setUnread] = useState(0);
+
+  const loadUnread = useCallback(async () => {
+    const user = getCurrentUser();
+    if (!user?.email) return;
+    try {
+      const res = await fetch(`/api/messages?me=${encodeURIComponent(user.email)}`);
+      if (res.ok) {
+        const partners = (await res.json()).partners ?? [];
+        setUnread(partners.reduce((sum: number, p: { unread: number }) => sum + (p.unread || 0), 0));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    loadUnread();
+    const t = setInterval(loadUnread, 8000);
+    return () => clearInterval(t);
+  }, [loadUnread]);
+
   const pathname = usePathname();
 
   return (
@@ -78,6 +104,8 @@ export function Sidebar({
         {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           const Icon = item.icon;
+          // Messages shows the live unread count; it clears once messages are read.
+          const badgeCount = item.href.endsWith("/messages") ? unread : item.badge;
           return (
             <Link
               key={item.href}
@@ -91,9 +119,9 @@ export function Sidebar({
             >
               <Icon size={18} />
               <span className="flex-1">{item.label}</span>
-              {item.badge ? (
+              {badgeCount ? (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-red px-1.5 text-[10px] font-bold text-white">
-                  {item.badge}
+                  {badgeCount}
                 </span>
               ) : null}
             </Link>

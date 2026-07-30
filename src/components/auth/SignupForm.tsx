@@ -51,8 +51,13 @@ export function SignupForm({
 
   return (
     <AuthCard
-      title="Create Account"
-      subtitle={`Register for ${role === "admin" ? "Admin" : "Candidate"} portal`}
+      portal={role}
+      title={role === "admin" ? "Create Admin Account" : "Create Candidate Account"}
+      subtitle={
+        role === "admin"
+          ? "Register an admin account to manage the HRMS."
+          : "Register a candidate account to track attendance, payslips and leaves."
+      }
       backHref="/"
       backLabel="Back to portal selection"
     >

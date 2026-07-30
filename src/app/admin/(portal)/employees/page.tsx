@@ -1,12 +1,15 @@
 "use client";
 
 import { EmployeeForm } from "@/components/employees/EmployeeForm";
+import { PasswordInput } from "@/components/auth/PasswordInput";
+import { DocumentManager } from "@/components/documents/DocumentManager";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Table } from "@/components/ui/Table";
 import { emptyEmployeeForm } from "@/lib/employee-form";
+import { employeeErrors } from "@/lib/validators";
 import { formatDate } from "@/lib/utils";
 import type { Employee, EmployeeInput } from "@/types/employee";
 import Link from "next/link";
@@ -33,6 +36,25 @@ export default function EmployeesPage() {
   const [form, setForm] = useState<EmployeeInput>(emptyEmployeeForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [createdId, setCreatedId] = useState<number | null>(null);
+  const [loginPassword, setLoginPassword] = useState("");
+  const [pwEmail, setPwEmail] = useState<string | null>(null);
+  const [pwValue, setPwValue] = useState("");
+  const [pwMsg, setPwMsg] = useState("");
+
+  async function resetPassword(ev: React.FormEvent) {
+    ev.preventDefault();
+    setPwMsg("");
+    if (pwValue.length < 6) { setPwMsg("Password must be at least 6 characters."); return; }
+    const res = await fetch("/api/users/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: pwEmail, newPassword: pwValue }),
+    });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); setPwMsg(d.error ?? "Failed to update."); return; }
+    setPwMsg("Password updated.");
+    setPwValue("");
+  }
 
   async function load(q = "") {
     setLoading(true);
@@ -57,6 +79,8 @@ export default function EmployeesPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const clientErrors = employeeErrors(form);
+    if (Object.keys(clientErrors).length > 0) { setErrors(clientErrors); return; }
     setSaving(true);
     setErrors({});
     try {
@@ -70,8 +94,23 @@ export default function EmployeesPage() {
         setErrors(data.errors ?? { form: data.error ?? "Failed to save." });
         return;
       }
-      setOpen(false);
-      setForm(emptyEmployeeForm);
+      const data = await res.json().catch(() => ({}));
+      // Create the employee's login account so they can sign in to the candidate portal.
+      if (loginPassword && form.email) {
+        const parts = form.name.trim().split(/\s+/);
+        await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: parts[0] || form.name,
+            lastName: parts.slice(1).join(" "),
+            email: form.email,
+            password: loginPassword,
+            role: "candidate",
+          }),
+        }).catch(() => {});
+      }
+      if (data.employee?.id) setCreatedId(data.employee.id);
       await load(search);
     } finally {
       setSaving(false);
@@ -89,6 +128,8 @@ export default function EmployeesPage() {
           onClick={() => {
             setForm(emptyEmployeeForm);
             setErrors({});
+            setCreatedId(null);
+            setLoginPassword("");
             setOpen(true);
           }}
         >
@@ -142,6 +183,9 @@ export default function EmployeesPage() {
                   <Link href={`/admin/employees/${e.id}?view=1`} className="text-sm font-semibold text-gray-600 hover:underline">
                     View
                   </Link>
+                  <button className="text-sm font-semibold text-gray-600 hover:underline" onClick={() => { setPwEmail(e.email); setPwValue(""); setPwMsg(""); }}>
+                    Password
+                  </button>
                 </div>
               </td>
             </tr>
@@ -149,21 +193,61 @@ export default function EmployeesPage() {
         )}
       </Table>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Add Employee" wide>
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          <EmployeeForm
-            values={form}
-            errors={errors}
-            onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
-          />
-          {errors.form && <p className="text-sm text-red-500">{errors.form}</p>}
+      <Modal open={open} onClose={() => { setOpen(false); setCreatedId(null); }} title={createdId ? "Employee Saved — Upload Documents" : "Add Employee"} wide>
+        {createdId ? (
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-emerald-600">Employee saved. Upload documents (Agreement, Offer Letter, Contract, etc.) — they also appear on the Documents page.</p>
+            <DocumentManager
+              title="Employee Documents"
+              endpoint="/api/employee-documents"
+              ownerKey="employeeId"
+              ownerId={createdId}
+              categories={["Agreement", "Offer Letter", "Contract", "Aadhaar", "PAN", "Other"]}
+            />
+            <div className="flex justify-end">
+              <Button onClick={() => { setOpen(false); setCreatedId(null); }}>Done</Button>
+            </div>
+          </div>
+        ) : (
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <EmployeeForm
+              values={form}
+              errors={errors}
+              onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+            />
+            <section className="space-y-3">
+              <h3 className="text-sm font-bold uppercase tracking-wide text-gray-500">Login Credentials</h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="w-full space-y-1.5">
+                  <label className="block text-sm font-semibold text-gray-800">Login Email</label>
+                  <input value={form.email} readOnly className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-500" />
+                  <p className="text-xs text-gray-400">Uses the email above.</p>
+                </div>
+                <PasswordInput label="Login Password" placeholder="At least 6 characters" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} minLength={6} />
+              </div>
+              <p className="text-xs text-gray-400">Set a password to create a candidate-portal login for this employee. Leave blank to skip.</p>
+            </section>
+            {errors.form && <p className="text-sm text-red-500">{errors.form}</p>}
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Save Employee"}
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      <Modal open={!!pwEmail} onClose={() => setPwEmail(null)} title="Set / Reset Login Password">
+        <form className="space-y-3" onSubmit={resetPassword}>
+          <Input label="Employee Email" value={pwEmail ?? ""} readOnly />
+          <PasswordInput label="New Password" placeholder="At least 6 characters" value={pwValue} onChange={(e) => setPwValue(e.target.value)} required minLength={6} />
+          {pwMsg && <p className={`text-sm ${pwMsg.includes("updated") ? "text-emerald-600" : "text-red-500"}`}>{pwMsg}</p>}
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save Employee"}
-            </Button>
+            <Button type="button" variant="secondary" onClick={() => setPwEmail(null)}>Close</Button>
+            <Button type="submit">Update Password</Button>
           </div>
         </form>
       </Modal>

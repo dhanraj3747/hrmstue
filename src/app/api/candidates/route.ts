@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+// GET /api/candidates?owner=<email>&status=Selected
+// - owner: restrict to one HR's candidates (candidate portal)
+// - status: restrict to a pipeline status (admin Selected Candidates view)
+// With no owner param, returns ALL candidates (admin can see every HR's CRM).
 export async function GET(req: NextRequest) {
   const owner = req.nextUrl.searchParams.get("owner");
-  const where = owner ? { owner } : {};
+  const status = req.nextUrl.searchParams.get("status");
+  const where: Prisma.CandidateWhereInput = {};
+  if (owner) where.owner = owner;
+  if (status) where.status = status;
   const candidates = await prisma.candidate.findMany({ where, orderBy: { addedAt: "desc" } });
   return NextResponse.json({ candidates });
 }
@@ -29,8 +37,10 @@ export async function POST(req: NextRequest) {
       shortlisted: String(body.shortlisted || "No"),
       interviewDate: body.interviewDate ? new Date(String(body.interviewDate)) : null,
       doj: body.doj ? new Date(String(body.doj)) : null,
+      joiningStatus: body.joiningStatus ? String(body.joiningStatus) : null,
       owner: body.owner ? String(body.owner) : null,
-    },
+      ownerName: body.ownerName ? String(body.ownerName) : null,
+    } as unknown as Prisma.CandidateUncheckedCreateInput,
   });
   return NextResponse.json({ candidate }, { status: 201 });
 }

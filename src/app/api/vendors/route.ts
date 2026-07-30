@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,8 @@ export async function POST(req: NextRequest) {
         location: body.location ? String(body.location) : null,
         agreementDate: body.agreementDate ? new Date(String(body.agreementDate)) : null,
         clauseDays: Number(body.clauseDays) || 45,
-      },
+        contacts: body.contacts && typeof body.contacts === "object" ? (body.contacts as Prisma.InputJsonValue) : undefined,
+      } as unknown as Prisma.VendorUncheckedCreateInput,
       include: { documents: true },
     });
     return NextResponse.json({ vendor }, { status: 201 });

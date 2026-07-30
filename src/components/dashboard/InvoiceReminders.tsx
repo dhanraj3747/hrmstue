@@ -43,22 +43,22 @@ export function InvoiceReminders() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="!p-4">
+        <Link href="/admin/selected-candidates?invoice=today"><Card className="!p-4 transition hover:shadow-md">
           <p className="text-sm text-gray-500">Due Today</p>
           <p className="mt-1 text-3xl font-bold text-emerald-600">{summary.today}</p>
-        </Card>
-        <Card className="!p-4">
+        </Card></Link>
+        <Link href="/admin/selected-candidates?invoice=overdue"><Card className="!p-4 transition hover:shadow-md">
           <p className="text-sm text-gray-500">Overdue</p>
           <p className="mt-1 text-3xl font-bold text-red-600">{summary.overdue}</p>
-        </Card>
-        <Card className="!p-4">
+        </Card></Link>
+        <Link href="/admin/selected-candidates?invoice=upcoming"><Card className="!p-4 transition hover:shadow-md">
           <p className="text-sm text-gray-500">Upcoming</p>
           <p className="mt-1 text-3xl font-bold text-blue-600">{summary.upcoming}</p>
-        </Card>
-        <Card className="!p-4">
+        </Card></Link>
+        <Link href="/admin/selected-candidates?invoice=raised"><Card className="!p-4 transition hover:shadow-md">
           <p className="text-sm text-gray-500">Raised</p>
           <p className="mt-1 text-3xl font-bold text-purple-600">{summary.raised}</p>
-        </Card>
+        </Card></Link>
       </div>
 
       <Card>

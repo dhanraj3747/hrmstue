@@ -49,14 +49,22 @@ export async function POST(req: NextRequest) {
   const clauseDays = Number(body.clauseDays) || payroll.cycleDays || 30;
   const invoiceDate = emp.doj ? new Date(computeCycle(emp.doj, clauseDays).invoiceDate) : null;
 
+  // Auto split gross into Basic (80%), HRA (10%), Special Allowance (remainder).
+  const gross = payroll.gross;
+  const basic = Math.round(gross * 0.8);
+  const hra = Math.round(gross * 0.1);
+  const special = Math.max(0, gross - basic - hra);
+  const bonus = payroll.bonus || 0;
   const earnings = [
-    { label: "Basic", amount: payroll.basic },
-    { label: "Allowances", amount: payroll.allowances },
+    { label: "Basic", amount: basic },
+    { label: "HRA", amount: hra },
+    { label: "Special Allowance", amount: special },
+    ...(bonus > 0 ? [{ label: "Bonus", amount: bonus }] : []),
   ];
-  const deductions = [{ label: "Deductions", amount: payroll.deductions }];
-  const grossPay = payroll.gross;
+  const deductions = [{ label: "Professional Tax", amount: payroll.deductions }];
+  const grossPay = gross + bonus;
   const totalDeductions = payroll.deductions;
-  const netPay = payroll.net;
+  const netPay = Math.max(0, grossPay - totalDeductions);
 
   try {
     const payslip = await prisma.payslip.create({
@@ -66,6 +74,7 @@ export async function POST(req: NextRequest) {
         employeeCode: emp.employeeId,
         designation: emp.designation,
         department: emp.department,
+        subDepartment: emp.designation,
         doj: emp.doj,
         bankName: emp.bankName,
         accountNumber: emp.accountNumber,

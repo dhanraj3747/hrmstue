@@ -123,3 +123,56 @@ Changes:
 - **Add Vendor**: Company, Contact Person, Contact Email, Phone, Website, Location, Agreement Date, Clause Days.
 - **Selected Candidates**: labels — RED "Not Generated", GREEN "Invoice Generated", PURPLE "Ready to Raise"; editable dropdown to set Red/Green/Purple per candidate (stored as `statusOverride`).
 - **Fix**: candidate Payroll "Unexpected end of JSON input" — response is now guarded (`res.ok` + safe JSON parse).
+
+---
+
+# Update — Messaging, payslip format, labels
+
+New model **Message** (chat between admin and candidates). After pulling, run:
+
+```bash
+npx prisma migrate dev --name messaging
+```
+
+(That adds the `message` table and regenerates the Prisma client. Login accounts are unaffected.)
+
+Changes:
+- **Messages**: Admin portal now has a Messages page (sidebar) to see candidates they're chatting with and reply. Candidate Messages shows admin + HR recruiters as contacts. APIs: `/api/messages`, `/api/users`.
+- **Payslip PDF**: `/payslip-print/[id]` now matches the company payslip format (header, employee grid, Salary Details days, Earnings [Basic 80% / HRA 10% / Special Allowance] vs Taxes & Deductions, Net Salary Payable A-B, amount in words). Calculations are automatic from the payroll. Approved payslips remain downloadable from the candidate portal.
+- **Selected Candidates**: "Student" → "Candidate" everywhere.
+- **CRM**: removed the "Interviewed Today" card.
+- **Admin Job Openings**: "Clause Date" → "Clause Days".
+- Password fields on all login/signup pages have the show/hide eye toggle.
+
+---
+
+# Update — Job Openings (DB) + notifications + quick fixes
+
+New model **JobOpening**; **Payslip.subDepartment** column added. Run:
+
+```bash
+npx prisma migrate dev --name job_openings
+```
+
+- **Job Openings now DB-backed**: admin create/**edit**/delete at `/admin/job-openings` → instantly appears in the candidate portal `/candidate/job-openings`. APIs: `/api/job-openings`(+[id]).
+- **Notifications**: header bell now shows a live count — unread messages ("N new messages from <name>") for admin & candidate, plus "N new job openings" for candidates — with a dropdown, WhatsApp-style.
+- **Payslip**: added **Sub Department** to the PDF (auto-filled from the employee).
+- **CRM**: "Languages Known" is now a multi-select chip picker (choose many).
+- **Add Vendor page** (`/admin/vendors/new`): upload documents after saving the vendor.
+- **Site identity**: app icon/logo set to the RedFoxa logo.
+
+Still pending (from your list, for next round): fully dynamic candidate dashboard (Today/Week/Month + weekly chart from attendance), dynamic Leaves system, and payslip re-check against your latest sample.
+
+---
+
+# Update — Dynamic dashboard + Leaves system
+
+New model **Leave**. Run:
+
+```bash
+npx prisma migrate dev --name leaves
+npx prisma db seed
+```
+
+- **Leaves (DB)**: candidate `/candidate/leaves` requests a leave -> appears instantly with status; admin `/admin/leaves` approves/rejects. APIs: `/api/leaves`(+[id]).
+- **Candidate dashboard is now dynamic**: Today Work / Today Break / This Week / This Month and the Weekly Work & Breaks chart are computed from real attendance for the logged-in candidate; the Leave Summary (Pending/Approved/Rejected) reflects real leave records.

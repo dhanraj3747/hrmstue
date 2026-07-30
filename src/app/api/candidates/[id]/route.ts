@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 function pid(id: string) { const n = Number(id); return Number.isInteger(n) && n > 0 ? n : null; }
@@ -25,7 +26,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         ...set("shortlisted", body.shortlisted !== undefined ? String(body.shortlisted) : undefined),
         ...set("interviewDate", body.interviewDate !== undefined ? (body.interviewDate ? new Date(String(body.interviewDate)) : null) : undefined),
         ...set("doj", body.doj !== undefined ? (body.doj ? new Date(String(body.doj)) : null) : undefined),
-      },
+        ...set("joiningStatus", body.joiningStatus !== undefined ? (body.joiningStatus ? String(body.joiningStatus) : null) : undefined),
+      } as unknown as Prisma.CandidateUncheckedUpdateInput,
     });
     return NextResponse.json({ candidate });
   } catch { return NextResponse.json({ error: "Failed to update candidate." }, { status: 500 }); }

@@ -48,6 +48,7 @@ export interface Payslip {
   employeeCode: string;
   designation: string | null;
   department: string | null;
+  subDepartment: string | null;
   doj: string | null;
   bankName: string | null;
   accountNumber: string | null;
