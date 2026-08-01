@@ -12,16 +12,6 @@ import { examples, onlyDigits, onlyLetters } from "@/lib/validators";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const IT_OPTIONS = ["IT", "Non-IT"];
-const PROCESS_OPTIONS = [
-  "Voice Process - Infosys",
-  "Non-Voice - Wipro",
-  "Customer Support - Infosys",
-  "Data Entry - TCS",
-  "HR Recruiter - Capgemini",
-  "BPO - Cognizant",
-  "Technical Support - Accenture",
-  "Other",
-];
 const SHORTLIST_OPTIONS = ["Yes", "No", "Pending"];
 
 // UI row (all-strings, non-null) mapped from the DB candidate record.
@@ -127,8 +117,25 @@ export default function CRMPage() {
   const [editRow, setEditRow] = useState<Row | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [joinFilter, setJoinFilter] = useState("");
+  const [companyOptions, setCompanyOptions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const pageSize = 25;
+
+  // Company / process suggestions come from real vendors + job openings (no test data).
+  useEffect(() => {
+    (async () => {
+      const [ven, job] = await Promise.all([
+        fetch("/api/vendors").then((r) => r.json()).catch(() => ({ vendors: [] })),
+        fetch("/api/job-openings").then((r) => r.json()).catch(() => ({ jobs: [] })),
+      ]);
+      const set = new Set<string>();
+      for (const v of (ven.vendors ?? []) as { company?: string }[]) if (v.company) set.add(v.company);
+      for (const j of (job.jobs ?? []) as { company?: string; role?: string; process?: string }[]) {
+        if (j.company) set.add(j.company);
+      }
+      setCompanyOptions(Array.from(set).sort());
+    })();
+  }, []);
 
   const load = useCallback(async () => {
     if (!email) return;
@@ -281,6 +288,9 @@ export default function CRMPage() {
         <option value="Yet to Join" />
         <option value="Joined but Discontinued" />
       </datalist>
+      <datalist id="company-options">
+        {companyOptions.map((c) => <option key={c} value={c} />)}
+      </datalist>
 
       <div className="overflow-auto rounded-xl border border-gray-200 bg-white">
         <table className="min-w-full text-left text-sm">
@@ -318,9 +328,7 @@ export default function CRMPage() {
                     </select>
                   </td>
                   <td className="px-3 py-2.5">
-                    <select className="rounded-md border border-gray-200 px-2 py-1 text-sm" value={PROCESS_OPTIONS.includes(r.process) ? r.process : "Other"} onChange={(e) => updateField(r.id, { process: e.target.value })}>
-                      {PROCESS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
-                    </select>
+                    <input list="company-options" className="w-44 rounded-md border border-gray-200 px-2 py-1 text-sm" placeholder="Select or type company" value={r.process === "-" ? "" : r.process} onChange={(e) => updateField(r.id, { process: e.target.value })} />
                   </td>
                   <td className="px-3 py-2.5">
                     <select className="rounded-md border border-gray-200 px-2 py-1 text-sm" value={r.shortlisted} onChange={(e) => updateField(r.id, { shortlisted: e.target.value })}>
@@ -396,7 +404,10 @@ export default function CRMPage() {
           <Select label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} options={LOCATIONS.map((o) => ({ value: o, label: o }))} />
           <Input label="Remarks" value={form.remarks} maxLength={300} onChange={(e) => setForm({ ...form, remarks: e.target.value.slice(0, 300) })} hint="Max 300 characters" />
           <Select label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} options={CRM_STATUSES.map((o) => ({ value: o, label: o }))} />
-          <Select label="Process / Company" value={form.process || "Other"} onChange={(e) => setForm({ ...form, process: e.target.value })} options={PROCESS_OPTIONS.map((o) => ({ value: o, label: o }))} />
+          <div className="w-full space-y-1.5">
+            <label className="block text-sm font-semibold text-gray-800">Process / Company</label>
+            <input list="company-options" value={form.process} onChange={(e) => setForm({ ...form, process: e.target.value })} placeholder="Select or type company" className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-red" />
+          </div>
           <Select label="Shortlisted" value={form.shortlisted} onChange={(e) => setForm({ ...form, shortlisted: e.target.value })} options={SHORTLIST_OPTIONS.map((o) => ({ value: o, label: o }))} />
           <Input label="Interview Date" type="date" value={form.interviewDate} onChange={(e) => setForm({ ...form, interviewDate: e.target.value })} />
           <Input label="Date of Joining" type="date" value={form.doj} onChange={(e) => setForm({ ...form, doj: e.target.value })} />

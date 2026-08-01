@@ -20,6 +20,7 @@ interface Job {
   salary: string | null;
   ctc: string | null;
   takeHome: string | null;
+  vendorPayment: string | null;
   location: string | null;
   jd: string | null;
   clauseDays: number;
@@ -29,7 +30,7 @@ interface Vendor { id: number; company: string }
 
 const emptyForm = {
   role: "", company: "", vendorId: "", process: "Voice", skills: "", languages: "",
-  salary: "", ctc: "", takeHome: "", location: "", jd: "", clauseDays: "45",
+  salary: "", ctc: "", takeHome: "", vendorPayment: "", location: "", jd: "", clauseDays: "45",
 };
 
 export default function AdminJobOpeningsPage() {
@@ -62,7 +63,7 @@ export default function AdminJobOpeningsPage() {
     setForm({
       role: job.role, company: job.company ?? "", vendorId: job.vendorId ? String(job.vendorId) : "",
       process: job.process ?? "Voice", skills: job.skills ?? "", languages: job.languages ?? "",
-      salary: job.salary ?? "", ctc: job.ctc ?? "", takeHome: job.takeHome ?? "",
+      salary: job.salary ?? "", ctc: job.ctc ?? "", takeHome: job.takeHome ?? "", vendorPayment: job.vendorPayment ?? "",
       location: job.location ?? "", jd: job.jd ?? "", clauseDays: String(job.clauseDays ?? 45),
     });
     setOpen(true);
@@ -119,6 +120,7 @@ export default function AdminJobOpeningsPage() {
                 <p>Salary: ₹{job.salary}</p>
                 <p>CTC: {job.ctc}</p>
                 <p>Take-home: ₹{job.takeHome}</p>
+                {job.vendorPayment && <p className="font-medium text-purple-700">Vendor Payment: ₹{job.vendorPayment} <span className="text-xs font-normal text-gray-400">(admin only)</span></p>}
                 <p className="text-xs text-gray-400">Clause {job.clauseDays} days</p>
               </div>
               <p className="mt-2 line-clamp-2 text-sm text-gray-500">{job.jd}</p>
@@ -145,6 +147,7 @@ export default function AdminJobOpeningsPage() {
           <Input label="Salary Range" value={form.salary} maxLength={20} onChange={(e) => setForm({ ...form, salary: e.target.value.replace(/[^0-9\s-]/g, "").slice(0,20) })} hint={examples.salaryRange} />
           <Input label="CTC (monthly)" inputMode="numeric" maxLength={8} value={form.ctc} onChange={(e) => setForm({ ...form, ctc: onlyDigits(e.target.value, 8) })} hint={examples.monthlyCtc} />
           <Input label="Take-home Salary" inputMode="numeric" maxLength={8} value={form.takeHome} onChange={(e) => setForm({ ...form, takeHome: onlyDigits(e.target.value, 8) })} hint={examples.takeHome} />
+          <Input label="Vendor Payment (internal)" inputMode="numeric" maxLength={10} value={form.vendorPayment} onChange={(e) => setForm({ ...form, vendorPayment: onlyDigits(e.target.value, 10) })} hint="Admin-only — not shown to candidates" />
           <Input label="Clause Days" inputMode="numeric" maxLength={3} value={form.clauseDays} onChange={(e) => { let d = onlyDigits(e.target.value, 3); if (d && Number(d) > 365) d = "365"; setForm({ ...form, clauseDays: d }); }} hint={examples.clauseDays} />
           <div className="sm:col-span-2 space-y-1.5">
             <label className="block text-sm font-semibold">Job Description</label>

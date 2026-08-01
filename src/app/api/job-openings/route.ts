@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -25,11 +26,12 @@ export async function POST(req: NextRequest) {
       salary: str(body.salary),
       ctc: str(body.ctc),
       takeHome: str(body.takeHome),
+      vendorPayment: str(body.vendorPayment),
       location: str(body.location),
       jd: str(body.jd),
       clauseDays: Number(body.clauseDays) || 45,
       status: String(body.status || "Open"),
-    },
+    } as unknown as Prisma.JobOpeningUncheckedCreateInput,
   });
   return NextResponse.json({ job }, { status: 201 });
 }

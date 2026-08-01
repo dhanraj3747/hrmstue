@@ -41,6 +41,24 @@ export default function EmployeesPage() {
   const [pwEmail, setPwEmail] = useState<string | null>(null);
   const [pwValue, setPwValue] = useState("");
   const [pwMsg, setPwMsg] = useState("");
+  const [delEmp, setDelEmp] = useState<Employee | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [delErr, setDelErr] = useState("");
+  const [flash, setFlash] = useState("");
+
+  async function confirmDelete() {
+    if (!delEmp) return;
+    setDeleting(true);
+    setDelErr("");
+    try {
+      const res = await fetch(`/api/employees/${delEmp.id}`, { method: "DELETE" });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setDelErr(d.error ?? "Failed to delete."); return; }
+      setDelEmp(null);
+      await load(search);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function resetPassword(ev: React.FormEvent) {
     ev.preventDefault();
@@ -91,6 +109,28 @@ export default function EmployeesPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        // Employee already exists (added earlier). If a login password was entered,
+        // just set/create their credentials instead of failing on the duplicate.
+        if (res.status === 409 && data.errors?.email && form.email) {
+          if (loginPassword) {
+            const pres = await fetch("/api/users/password", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: form.email, newPassword: loginPassword }),
+            });
+            if (pres.ok) {
+              setOpen(false);
+              setFlash(`Login credentials set for existing employee ${form.email}. They can now sign in.`);
+              await load(search);
+              return;
+            }
+          }
+          setErrors({
+            email:
+              "This employee already exists. Enter a Login Password here to create their credentials, or use the Password button on their row.",
+          });
+          return;
+        }
         setErrors(data.errors ?? { form: data.error ?? "Failed to save." });
         return;
       }
@@ -136,6 +176,13 @@ export default function EmployeesPage() {
           + Add Employee
         </Button>
       </div>
+
+      {flash && (
+        <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+          <span>{flash}</span>
+          <button className="text-emerald-700 hover:underline" onClick={() => setFlash("")}>Dismiss</button>
+        </div>
+      )}
 
       <div className="max-w-sm">
         <Input
@@ -185,6 +232,9 @@ export default function EmployeesPage() {
                   </Link>
                   <button className="text-sm font-semibold text-gray-600 hover:underline" onClick={() => { setPwEmail(e.email); setPwValue(""); setPwMsg(""); }}>
                     Password
+                  </button>
+                  <button className="text-sm font-semibold text-red-600 hover:underline" onClick={() => { setDelEmp(e); setDelErr(""); }}>
+                    Delete
                   </button>
                 </div>
               </td>
@@ -250,6 +300,22 @@ export default function EmployeesPage() {
             <Button type="submit">Update Password</Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={!!delEmp} onClose={() => setDelEmp(null)} title="Delete Employee">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Are you sure you want to delete <strong>{delEmp?.name}</strong> ({delEmp?.email})? This permanently removes the
+            employee, their login account, attendance, payroll and documents. This cannot be undone.
+          </p>
+          {delErr && <p className="text-sm text-red-500">{delErr}</p>}
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setDelEmp(null)}>Cancel</Button>
+            <Button type="button" variant="danger" disabled={deleting} onClick={confirmDelete}>
+              {deleting ? "Deleting..." : "Delete Employee"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

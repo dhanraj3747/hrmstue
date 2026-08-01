@@ -159,7 +159,7 @@ npx prisma migrate dev --name job_openings
 - **Payslip**: added **Sub Department** to the PDF (auto-filled from the employee).
 - **CRM**: "Languages Known" is now a multi-select chip picker (choose many).
 - **Add Vendor page** (`/admin/vendors/new`): upload documents after saving the vendor.
-- **Site identity**: app icon/logo set to the RedFoxa logo.
+- **Site identity**: app icon/logo set to the Redfoxa logo.
 
 Still pending (from your list, for next round): fully dynamic candidate dashboard (Today/Week/Month + weekly chart from attendance), dynamic Leaves system, and payslip re-check against your latest sample.
 

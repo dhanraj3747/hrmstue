@@ -14,7 +14,7 @@ export function PortalSelector() {
             </div>
           </div>
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-            Site Identity · RedFoxa Careerlink Pvt Ltd
+            Site Identity · Redfoxa Careerlink Pvt Ltd
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">
             Smart HRMS 

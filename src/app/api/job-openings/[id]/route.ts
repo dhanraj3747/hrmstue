@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 function pid(id: string) { const n = Number(id); return Number.isInteger(n) && n > 0 ? n : null; }
@@ -21,11 +22,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         ...(body.salary !== undefined ? { salary: str(body.salary) } : {}),
         ...(body.ctc !== undefined ? { ctc: str(body.ctc) } : {}),
         ...(body.takeHome !== undefined ? { takeHome: str(body.takeHome) } : {}),
+        ...(body.vendorPayment !== undefined ? { vendorPayment: str(body.vendorPayment) } : {}),
         ...(body.location !== undefined ? { location: str(body.location) } : {}),
         ...(body.jd !== undefined ? { jd: str(body.jd) } : {}),
         ...(body.clauseDays !== undefined ? { clauseDays: Number(body.clauseDays) || 45 } : {}),
         ...(body.status !== undefined ? { status: String(body.status) } : {}),
-      },
+      } as unknown as Prisma.JobOpeningUncheckedUpdateInput,
     });
     return NextResponse.json({ job });
   } catch { return NextResponse.json({ error: "Failed to update job." }, { status: 500 }); }

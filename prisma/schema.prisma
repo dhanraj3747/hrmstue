@@ -291,6 +291,7 @@ model JobOpening {
   salary     String?
   ctc        String?
   takeHome   String?
+  vendorPayment String?  // internal — shown to admin only, hidden from candidates
   location   String?
   jd         String?  @db.Text
   clauseDays Int      @default(45)

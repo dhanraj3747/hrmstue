@@ -7,7 +7,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
   return (
     <PortalLayout
       navItems={candidateNav}
-      portalLabel="RedFoxa Careerlink"
+      portalLabel="Redfoxa Careerlink"
       requiredRole="candidate"
     >
       {children}
