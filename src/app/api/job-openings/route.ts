@@ -15,23 +15,34 @@ export async function POST(req: NextRequest) {
   const role = String(body.role || "").trim();
   if (!role) return NextResponse.json({ errors: { role: "Job role is required." } }, { status: 400 });
   const str = (v: unknown) => (v === undefined || v === null || v === "" ? null : String(v));
-  const job = await prisma.jobOpening.create({
-    data: {
-      role,
-      company: str(body.company),
-      vendorId: body.vendorId ? Number(body.vendorId) : null,
-      process: str(body.process),
-      skills: str(body.skills),
-      languages: str(body.languages),
-      salary: str(body.salary),
-      ctc: str(body.ctc),
-      takeHome: str(body.takeHome),
-      vendorPayment: str(body.vendorPayment),
-      location: str(body.location),
-      jd: str(body.jd),
-      clauseDays: Number(body.clauseDays) || 45,
-      status: String(body.status || "Open"),
-    } as unknown as Prisma.JobOpeningUncheckedCreateInput,
-  });
-  return NextResponse.json({ job }, { status: 201 });
+  const data: Record<string, unknown> = {
+    role,
+    company: str(body.company),
+    vendorId: body.vendorId ? Number(body.vendorId) : null,
+    process: str(body.process),
+    skills: str(body.skills),
+    languages: str(body.languages),
+    salary: str(body.salary),
+    ctc: str(body.ctc),
+    takeHome: str(body.takeHome),
+    vendorPayment: str(body.vendorPayment),
+    location: str(body.location),
+    jd: str(body.jd),
+    clauseDays: Number(body.clauseDays) || 45,
+    status: String(body.status || "Open"),
+  };
+  try {
+    const job = await prisma.jobOpening.create({ data: data as unknown as Prisma.JobOpeningUncheckedCreateInput });
+    return NextResponse.json({ job }, { status: 201 });
+  } catch (err) {
+    // The vendorPayment column may not exist yet (migration not run). Retry without it.
+    try {
+      delete data.vendorPayment;
+      const job = await prisma.jobOpening.create({ data: data as unknown as Prisma.JobOpeningUncheckedCreateInput });
+      return NextResponse.json({ job }, { status: 201 });
+    } catch (err2) {
+      console.error("POST /api/job-openings", err2 ?? err);
+      return NextResponse.json({ error: "Failed to create job opening." }, { status: 500 });
+    }
+  }
 }
