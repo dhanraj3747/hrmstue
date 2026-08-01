@@ -42,23 +42,29 @@ export default function AdminJobOpeningsPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
+  const loadVendors = async () => {
+    const v = await fetch("/api/vendors").then((r) => r.json()).catch(() => ({ vendors: [] }));
+    setVendors(v.vendors ?? []);
+  };
+
   async function load() {
     setLoading(true);
     try {
-      const [j, v] = await Promise.all([
+      const [j] = await Promise.all([
         fetch("/api/job-openings").then((r) => r.json()),
-        fetch("/api/vendors").then((r) => r.json()).catch(() => ({ vendors: [] })),
+        loadVendors(),
       ]);
       setJobs(j.jobs ?? []);
-      setVendors(v.vendors ?? []);
     } finally {
       setLoading(false);
     }
   }
   useEffect(() => { load(); }, []);
 
-  function openCreate() { setEditId(null); setForm(emptyForm); setOpen(true); }
+  // Always pull the latest vendors when opening the form, so newly added vendors appear.
+  function openCreate() { setEditId(null); setForm(emptyForm); loadVendors(); setOpen(true); }
   function openEdit(job: Job) {
+    loadVendors();
     setEditId(job.id);
     setForm({
       role: job.role, company: job.company ?? "", vendorId: job.vendorId ? String(job.vendorId) : "",
