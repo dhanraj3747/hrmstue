@@ -3,6 +3,8 @@
 import { Badge } from "@/components/ui/Badge";
 import { Table } from "@/components/ui/Table";
 import type { Employee } from "@/types/employee";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function CRMAccessPage() {
@@ -35,19 +37,21 @@ export default function CRMAccessPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">CRM Access Control</h2>
-        <p className="text-sm text-gray-500">Employees with CRM enabled can use the Recruitment Tracker. This list is live from Employees.</p>
+        <p className="text-sm text-gray-500">Employees with CRM enabled can use the Recruitment Tracker. Click an employee to open their CRM.</p>
       </div>
 
-      <Table headers={["Employee ID", "Name", "Email", "Designation", "CRM Access"]}>
+      <Table headers={["Employee ID", "Name", "Email", "Designation", "CRM Access", "Recruitment CRM"]}>
         {loading ? (
-          <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+          <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
         ) : rows.length === 0 ? (
-          <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">No employees yet.</td></tr>
+          <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No employees yet.</td></tr>
         ) : (
           rows.map((e) => (
             <tr key={e.id} className="hover:bg-gray-50/80">
               <td className="px-4 py-3 font-mono text-xs text-gray-600">{e.employeeId}</td>
-              <td className="px-4 py-3 font-medium">{e.name}</td>
+              <td className="px-4 py-3 font-medium">
+                <Link href={`/admin/crm/${e.id}`} className="text-brand-red hover:underline">{e.name}</Link>
+              </td>
               <td className="px-4 py-3">{e.email}</td>
               <td className="px-4 py-3">{e.designation || "-"}</td>
               <td className="px-4 py-3">
@@ -57,6 +61,11 @@ export default function CRMAccessPage() {
                   </button>
                   <Badge tone={e.crmEnabled ? "green" : "gray"}>{e.crmEnabled ? "Enabled" : "Disabled"}</Badge>
                 </div>
+              </td>
+              <td className="px-4 py-3">
+                <Link href={`/admin/crm/${e.id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-brand-red hover:underline">
+                  Open CRM <ArrowRight size={14} />
+                </Link>
               </td>
             </tr>
           ))
