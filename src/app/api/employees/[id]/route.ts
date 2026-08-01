@@ -73,7 +73,12 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   if (id === null) return NextResponse.json({ error: "Invalid id." }, { status: 400 });
 
   try {
+    const emp = await prisma.employee.findUnique({ where: { id } });
     await prisma.employee.delete({ where: { id } });
+    // Also remove the employee's candidate-portal login account (never an admin).
+    if (emp?.email) {
+      await prisma.user.deleteMany({ where: { email: emp.email, role: "candidate" } });
+    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
