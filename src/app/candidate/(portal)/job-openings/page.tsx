@@ -28,7 +28,7 @@ export default function CandidateJobOpeningsPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/job-openings");
+        const res = await fetch("/api/job-openings", { cache: "no-store" });
         if (res.ok) {
           const list = (await res.json()).jobs ?? [];
           setJobs(list);

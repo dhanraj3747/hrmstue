@@ -41,9 +41,10 @@ export default function AdminJobOpeningsPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const loadVendors = async () => {
-    const v = await fetch("/api/vendors").then((r) => r.json()).catch(() => ({ vendors: [] }));
+    const v = await fetch("/api/vendors", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ vendors: [] }));
     setVendors(v.vendors ?? []);
   };
 
@@ -51,7 +52,7 @@ export default function AdminJobOpeningsPage() {
     setLoading(true);
     try {
       const [j] = await Promise.all([
-        fetch("/api/job-openings").then((r) => r.json()),
+        fetch("/api/job-openings", { cache: "no-store" }).then((r) => r.json()),
         loadVendors(),
       ]);
       setJobs(j.jobs ?? []);
@@ -62,8 +63,9 @@ export default function AdminJobOpeningsPage() {
   useEffect(() => { load(); }, []);
 
   // Always pull the latest vendors when opening the form, so newly added vendors appear.
-  function openCreate() { setEditId(null); setForm(emptyForm); loadVendors(); setOpen(true); }
+  function openCreate() { setEditId(null); setForm(emptyForm); setSaveError(""); loadVendors(); setOpen(true); }
   function openEdit(job: Job) {
+    setSaveError("");
     loadVendors();
     setEditId(job.id);
     setForm({
@@ -78,14 +80,22 @@ export default function AdminJobOpeningsPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setSaveError("");
     try {
       const company = form.company || vendors.find((v) => String(v.id) === form.vendorId)?.company || "";
       const payload = { ...form, company, clauseDays: Number(form.clauseDays), vendorId: form.vendorId || null };
       const url = editId ? `/api/job-openings/${editId}` : "/api/job-openings";
       const method = editId ? "PUT" : "POST";
-      await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setSaveError(d.errors?.role ?? d.error ?? "Failed to save job. Please try again.");
+        return;
+      }
       setOpen(false);
       await load();
+    } catch {
+      setSaveError("Network error while saving. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -160,6 +170,7 @@ export default function AdminJobOpeningsPage() {
             <textarea className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand-red" rows={3}
               value={form.jd} onChange={(e) => setForm({ ...form, jd: e.target.value })} />
           </div>
+          {saveError && <p className="sm:col-span-2 text-sm text-red-500">{saveError}</p>}
           <div className="sm:col-span-2">
             <Button type="submit" className="w-full" disabled={saving}>{saving ? "Saving..." : editId ? "Save Changes" : "Create Job"}</Button>
           </div>

@@ -280,6 +280,20 @@ model Message {
   @@map("message")
 }
 
+model Notification {
+  id        Int       @id @default(autoincrement())
+  email     String    // recipient login email
+  title     String
+  body      String?   @db.Text
+  href      String?
+  type      String    @default("job") // job, message, leave, general
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+  @@map("notification")
+}
+
 model JobOpening {
   id         Int      @id @default(autoincrement())
   role       String
