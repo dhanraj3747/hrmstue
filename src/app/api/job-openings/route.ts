@@ -67,8 +67,14 @@ export async function POST(req: NextRequest) {
       await notifyCandidates(job);
       return NextResponse.json({ job }, { status: 201 });
     } catch (err2) {
-      console.error("POST /api/job-openings", err2 ?? err);
-      return NextResponse.json({ error: "Failed to create job opening." }, { status: 500 });
+      const e = (err2 ?? err) as { message?: string; code?: string };
+      console.error("POST /api/job-openings failed:", e);
+      // Surface the real Prisma error so production issues (e.g. missing table
+      // P2021, unknown column P2022) are diagnosable instead of a generic message.
+      return NextResponse.json(
+        { error: "Failed to create job opening.", code: e?.code, detail: e?.message ?? String(e) },
+        { status: 500 }
+      );
     }
   }
 }

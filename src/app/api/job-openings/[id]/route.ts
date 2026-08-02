@@ -34,7 +34,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       delete data.vendorPayment;
       const job = await prisma.jobOpening.update({ where: { id }, data: data as unknown as Prisma.JobOpeningUncheckedUpdateInput });
       return NextResponse.json({ job });
-    } catch { return NextResponse.json({ error: "Failed to update job." }, { status: 500 }); }
+    } catch (err2) {
+      const e = err2 as { message?: string; code?: string };
+      console.error("PUT /api/job-openings/[id] failed:", e);
+      return NextResponse.json({ error: "Failed to update job.", code: e?.code, detail: e?.message ?? String(e) }, { status: 500 });
+    }
   }
 }
 

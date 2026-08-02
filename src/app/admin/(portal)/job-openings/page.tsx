@@ -89,7 +89,8 @@ export default function AdminJobOpeningsPage() {
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        setSaveError(d.errors?.role ?? d.error ?? "Failed to save job. Please try again.");
+        const base = d.errors?.role ?? d.error ?? "Failed to save job. Please try again.";
+        setSaveError(d.detail ? `${base} — ${d.code ? `[${d.code}] ` : ""}${d.detail}` : base);
         return;
       }
       setOpen(false);
