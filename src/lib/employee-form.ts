@@ -8,6 +8,7 @@ export const emptyEmployeeForm: EmployeeInput = {
   designation: "",
   phone: "",
   email: "",
+  qualification: "",
   doj: "",
   status: "Active",
   accountHolder: "",
@@ -30,6 +31,7 @@ export function toFormValues(e: {
   designation: string | null;
   phone: string | null;
   email: string;
+  qualification: string | null;
   doj: string | null;
   status: string;
   accountHolder: string | null;
@@ -50,6 +52,7 @@ export function toFormValues(e: {
     designation: e.designation ?? "",
     phone: e.phone ?? "",
     email: e.email,
+    qualification: e.qualification ?? "",
     doj: e.doj ? e.doj.slice(0, 10) : "",
     status: e.status,
     accountHolder: e.accountHolder ?? "",

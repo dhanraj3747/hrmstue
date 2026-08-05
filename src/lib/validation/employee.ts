@@ -82,6 +82,7 @@ export function validateEmployee(
     department: optStr(body.department),
     designation: optStr(body.designation),
     phone,
+    qualification: optStr(body.qualification),
     doj: optStr(body.doj),
     status: optStr(body.status) ?? "Active",
     accountHolder: optStr(body.accountHolder),

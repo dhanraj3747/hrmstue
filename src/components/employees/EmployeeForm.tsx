@@ -57,6 +57,9 @@ export function EmployeeForm({ values, errors = {}, onChange }: EmployeeFormProp
           <Input label="Email" type="email" value={values.email} maxLength={120}
             onChange={(e) => onChange({ email: e.target.value.slice(0, 120) })}
             error={err("email")} hint={examples.email} required />
+          <Input label="Qualification" value={values.qualification ?? ""} maxLength={100}
+            onChange={(e) => onChange({ qualification: e.target.value.slice(0, 100) })}
+            error={errors.qualification} hint="e.g. B.Com, B.E, MBA" />
           <Input label="Date of Joining" type="date" value={values.doj ?? ""}
             onChange={(e) => onChange({ doj: e.target.value })} error={errors.doj} />
           <Select label="Status" value={values.status ?? "Active"}

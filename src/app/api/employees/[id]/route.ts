@@ -46,8 +46,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       data: {
         ...rest,
         doj: doj ? new Date(doj) : null,
-      },
+      } as unknown as Prisma.EmployeeUncheckedUpdateInput,
     });
+    // Keep the login account's CRM access in sync with the employee toggle.
+    if (body.crmEnabled !== undefined && employee.email) {
+      await prisma.user.updateMany({ where: { email: employee.email }, data: { crmAccess: Boolean(body.crmEnabled) } });
+    }
     return NextResponse.json({ employee });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {

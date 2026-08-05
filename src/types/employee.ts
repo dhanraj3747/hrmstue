@@ -19,6 +19,7 @@ export interface Employee {
   designation: string | null;
   phone: string | null;
   email: string;
+  qualification: string | null;
   doj: string | null; // ISO date string
   status: string;
 
@@ -46,6 +47,7 @@ export interface EmployeeInput {
   designation?: string | null;
   phone?: string | null;
   email: string;
+  qualification?: string | null;
   doj?: string | null;
   status?: string;
 

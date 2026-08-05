@@ -50,19 +50,22 @@ export async function POST(req: NextRequest) {
     ctc: str(body.ctc),
     takeHome: str(body.takeHome),
     vendorPayment: str(body.vendorPayment),
+    qualification: str(body.qualification),
+    requirement: str(body.requirement),
+    itType: str(body.itType),
     location: str(body.location),
     jd: str(body.jd),
     clauseDays: Number(body.clauseDays) || 45,
-    status: String(body.status || "Open"),
+    status: String(body.status || "Active"),
   };
   try {
     const job = await prisma.jobOpening.create({ data: data as unknown as Prisma.JobOpeningUncheckedCreateInput });
     await notifyCandidates(job);
     return NextResponse.json({ job }, { status: 201 });
   } catch (err) {
-    // The vendorPayment column may not exist yet (migration not run). Retry without it.
+    // Newer columns may not exist yet if the DB isn't synced. Retry without them.
     try {
-      delete data.vendorPayment;
+      delete data.vendorPayment; delete data.qualification; delete data.requirement; delete data.itType;
       const job = await prisma.jobOpening.create({ data: data as unknown as Prisma.JobOpeningUncheckedCreateInput });
       await notifyCandidates(job);
       return NextResponse.json({ job }, { status: 201 });

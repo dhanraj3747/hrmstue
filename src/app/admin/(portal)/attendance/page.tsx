@@ -30,18 +30,19 @@ export default function AdminAttendancePage() {
   const [employeeId, setEmployeeId] = useState("");
 
   useEffect(() => {
-    (async () => {
-      try {
-        const [att, emp] = await Promise.all([
-          fetch("/api/attendance").then((r) => r.json()).catch(() => ({ records: [] })),
-          fetch("/api/employees").then((r) => r.json()).catch(() => ({ employees: [] })),
-        ]);
-        setRecords(att.records ?? []);
-        setAllEmployees((emp.employees ?? []).map((e: { id: number; name: string }) => ({ id: e.id, name: e.name })));
-      } finally {
-        setLoading(false);
-      }
-    })();
+    const loadData = async () => {
+      const [att, emp] = await Promise.all([
+        fetch("/api/attendance", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ records: [] })),
+        fetch("/api/employees", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ employees: [] })),
+      ]);
+      setRecords(att.records ?? []);
+      setAllEmployees((emp.employees ?? []).map((e: { id: number; name: string }) => ({ id: e.id, name: e.name })));
+      setLoading(false);
+    };
+    loadData();
+    // Poll so live logins / work hours update automatically.
+    const t = setInterval(loadData, 15000);
+    return () => clearInterval(t);
   }, []);
 
   // Every employee appears here (new employees included), even before they clock in.
@@ -104,7 +105,7 @@ export default function AdminAttendancePage() {
               <td className="px-4 py-3">{timeOnly(r.logoutAt)}</td>
               <td className="px-4 py-3">{formatWorkedMinutes(r.workedMinutes)}</td>
               <td className="px-4 py-3">{formatWorkedMinutes(r.breakMinutes)}</td>
-              <td className="px-4 py-3"><Badge tone={r.status === "Active" ? "orange" : "green"}>{r.status}</Badge></td>
+              <td className="px-4 py-3"><Badge tone={r.status === "Complete" ? "green" : "orange"}>{r.status === "Active" ? "Working" : r.status === "Break" ? "On Break" : r.status}</Badge></td>
             </tr>
           ))
         )}

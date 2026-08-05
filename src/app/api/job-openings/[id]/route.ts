@@ -20,6 +20,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     ...(body.ctc !== undefined ? { ctc: str(body.ctc) } : {}),
     ...(body.takeHome !== undefined ? { takeHome: str(body.takeHome) } : {}),
     ...(body.vendorPayment !== undefined ? { vendorPayment: str(body.vendorPayment) } : {}),
+    ...(body.qualification !== undefined ? { qualification: str(body.qualification) } : {}),
+    ...(body.requirement !== undefined ? { requirement: str(body.requirement) } : {}),
+    ...(body.itType !== undefined ? { itType: str(body.itType) } : {}),
     ...(body.location !== undefined ? { location: str(body.location) } : {}),
     ...(body.jd !== undefined ? { jd: str(body.jd) } : {}),
     ...(body.clauseDays !== undefined ? { clauseDays: Number(body.clauseDays) || 45 } : {}),
@@ -29,9 +32,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const job = await prisma.jobOpening.update({ where: { id }, data: data as unknown as Prisma.JobOpeningUncheckedUpdateInput });
     return NextResponse.json({ job });
   } catch {
-    // vendorPayment column may not exist yet (migration not run). Retry without it.
+    // Newer columns may not exist yet if the DB isn't synced. Retry without them.
     try {
-      delete data.vendorPayment;
+      delete data.vendorPayment; delete data.qualification; delete data.requirement; delete data.itType;
       const job = await prisma.jobOpening.update({ where: { id }, data: data as unknown as Prisma.JobOpeningUncheckedUpdateInput });
       return NextResponse.json({ job });
     } catch (err2) {

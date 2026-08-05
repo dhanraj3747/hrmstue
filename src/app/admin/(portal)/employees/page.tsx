@@ -135,20 +135,22 @@ export default function EmployeesPage() {
         return;
       }
       const data = await res.json().catch(() => ({}));
-      // Create the employee's login account so they can sign in to the candidate portal.
+      // Create the employee's login account (create-or-set) so they can sign into the
+      // candidate portal. This is checked — a silent failure would leave them unable to log in.
       if (loginPassword && form.email) {
-        const parts = form.name.trim().split(/\s+/);
-        await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName: parts[0] || form.name,
-            lastName: parts.slice(1).join(" "),
-            email: form.email,
-            password: loginPassword,
-            role: "candidate",
-          }),
-        }).catch(() => {});
+        try {
+          const pres = await fetch("/api/users/password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: form.email, newPassword: loginPassword }),
+          });
+          if (!pres.ok) {
+            const d = await pres.json().catch(() => ({}));
+            setFlash(`Employee saved, but the login could not be set up (${d.error ?? d.errors?.newPassword ?? "unknown error"}). Use the Password button on their row to set it.`);
+          }
+        } catch {
+          setFlash("Employee saved, but the login could not be set up (network error). Use the Password button on their row to set it.");
+        }
       }
       if (data.employee?.id) setCreatedId(data.employee.id);
       await load(search);

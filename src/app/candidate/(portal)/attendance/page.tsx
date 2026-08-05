@@ -22,6 +22,7 @@ interface Session {
   workAccumSec: number;
   breakAccumSec: number;
   segmentStart: string;
+  attendanceId?: number; // DB record id so admin sees the live session
 }
 interface DoneSnap {
   day: string;        // yyyy-mm-dd
@@ -134,7 +135,8 @@ export default function AttendancePage() {
 
   const { workSec, breakSec } = derive(session, nowMs);
   // Already completed today if we have a snapshot, or a saved record dated today.
-  const completedToday = !!done || history.some((r) => isSameDay(new Date(r.date), new Date()));
+  // Only a COMPLETED day blocks a new login (an in-progress "Active" record does not).
+  const completedToday = !!done || history.some((r) => isSameDay(new Date(r.date), new Date()) && r.status === "Complete");
   const state: "idle" | "working" | "break" | "done" =
     session ? session.state : completedToday ? "done" : "idle";
 
@@ -152,24 +154,61 @@ export default function AttendancePage() {
   const weekWorkSec = pastWeekMin * 60 + workSec;
   const monthWorkSec = pastMonthMin * 60 + workSec;
 
-  function login() {
+  // Push the current live figures to the DB so the admin sees them in near-real-time.
+  const syncLive = useCallback(async (s: Session, statusLabel: "Active" | "Break") => {
+    if (!s.attendanceId) return;
+    const { workSec, breakSec } = derive(s, Date.now());
+    try {
+      await fetch(`/api/attendance/${s.attendanceId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: statusLabel, workedMinutes: Math.round(workSec / 60), breakMinutes: Math.round(breakSec / 60) }),
+      });
+    } catch { /* ignore */ }
+  }, []);
+
+  // Every 30s push the running totals to the DB so admins see near-live hours.
+  useEffect(() => {
+    if (!session) return;
+    const id = setInterval(() => { syncLive(session, session.state === "working" ? "Active" : "Break"); }, 30000);
+    return () => clearInterval(id);
+  }, [session, syncLive]);
+
+  async function login() {
     if (completedToday) { setNotice("You have already logged in today. Only one login is allowed per day."); return; }
     setNotice("");
     const iso = new Date().toISOString();
     setNowMs(Date.now());
-    saveSession({ loginAt: iso, state: "working", breaksTaken: 0, workAccumSec: 0, breakAccumSec: 0, segmentStart: iso });
+    let attendanceId: number | undefined;
+    if (employeeId) {
+      try {
+        const res = await fetch("/api/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ employeeId, date: iso, loginAt: iso, logoutAt: null, breakMinutes: 0, workedMinutes: 0, status: "Active" }),
+        });
+        if (res.status === 409) { setNotice("You have already logged in today. Only one login is allowed per day."); return; }
+        if (res.ok) { attendanceId = (await res.json()).record?.id; await loadHistory(employeeId); }
+      } catch { /* offline — still start the local timer */ }
+    }
+    saveSession({ loginAt: iso, state: "working", breaksTaken: 0, workAccumSec: 0, breakAccumSec: 0, segmentStart: iso, attendanceId });
   }
+
   function takeBreak() {
     if (!session) return;
     const nowIso = new Date().toISOString();
     const seg = Math.floor((Date.now() - new Date(session.segmentStart).getTime()) / 1000);
-    saveSession({ ...session, state: "break", workAccumSec: session.workAccumSec + seg, breaksTaken: session.breaksTaken + 1, segmentStart: nowIso });
+    const next: Session = { ...session, state: "break", workAccumSec: session.workAccumSec + seg, breaksTaken: session.breaksTaken + 1, segmentStart: nowIso };
+    saveSession(next);
+    syncLive(next, "Break");
   }
   function resume() {
     if (!session) return;
     const nowIso = new Date().toISOString();
     const seg = Math.floor((Date.now() - new Date(session.segmentStart).getTime()) / 1000);
-    saveSession({ ...session, state: "working", breakAccumSec: session.breakAccumSec + seg, segmentStart: nowIso });
+    const next: Session = { ...session, state: "working", breakAccumSec: session.breakAccumSec + seg, segmentStart: nowIso };
+    saveSession(next);
+    syncLive(next, "Active");
   }
 
   async function logout() {
@@ -177,24 +216,27 @@ export default function AttendancePage() {
     const iso = new Date().toISOString();
     const { workSec: finalWork, breakSec: finalBreak } = derive(session, Date.now());
     const snap: DoneSnap = { day: dayStr(), loginAt: session.loginAt, logoutAt: iso, breaksTaken: session.breaksTaken };
+    const attId = session.attendanceId;
     saveSession(null);
     saveDone(snap);
     if (employeeId) {
       setSaving(true);
       try {
-        await fetch("/api/attendance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            employeeId,
-            date: iso,
-            loginAt: snap.loginAt,
-            logoutAt: iso,
-            breakMinutes: Math.round(finalBreak / 60),
-            workedMinutes: Math.round(finalWork / 60),
-            status: "Complete",
-          }),
-        });
+        if (attId) {
+          // Close out the live DB record created at login.
+          await fetch(`/api/attendance/${attId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ logoutAt: iso, breakMinutes: Math.round(finalBreak / 60), workedMinutes: Math.round(finalWork / 60), status: "Complete" }),
+          });
+        } else {
+          // Legacy fallback if no live record exists.
+          await fetch("/api/attendance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ employeeId, date: iso, loginAt: snap.loginAt, logoutAt: iso, breakMinutes: Math.round(finalBreak / 60), workedMinutes: Math.round(finalWork / 60), status: "Complete" }),
+          });
+        }
         await loadHistory(employeeId);
       } finally {
         setSaving(false);

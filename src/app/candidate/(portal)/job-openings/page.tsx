@@ -16,8 +16,12 @@ interface Job {
   salary: string | null;
   ctc: string | null;
   takeHome: string | null;
+  qualification: string | null;
+  requirement: string | null;
+  itType: string | null;
   location: string | null;
   jd: string | null;
+  status: string;
 }
 
 export default function CandidateJobOpeningsPage() {
@@ -30,7 +34,8 @@ export default function CandidateJobOpeningsPage() {
       try {
         const res = await fetch("/api/job-openings", { cache: "no-store" });
         if (res.ok) {
-          const list = (await res.json()).jobs ?? [];
+          // Candidates only see jobs that are Active (or unspecified/Other), not Inactive.
+          const list = ((await res.json()).jobs ?? []).filter((j: Job) => j.status !== "Inactive");
           setJobs(list);
           // Mark job openings as seen for the notification badge.
           try { localStorage.setItem("hrms_jobs_seen", String(list.length)); } catch {}
@@ -87,6 +92,9 @@ export default function CandidateJobOpeningsPage() {
             <p><span className="font-semibold">CTC:</span> {selected.ctc || "-"}</p>
             <p><span className="font-semibold">Salary:</span> {selected.salary || "-"}</p>
             <p><span className="font-semibold">Take-home:</span> {selected.takeHome ? `₹${selected.takeHome}` : "-"}</p>
+            <p><span className="font-semibold">IT / Non-IT:</span> {selected.itType || "-"}</p>
+            <p><span className="font-semibold">Qualification:</span> {selected.qualification || "-"}</p>
+            <p className="sm:col-span-2"><span className="font-semibold">Requirement:</span> {selected.requirement || "-"}</p>
             <p className="sm:col-span-2"><span className="font-semibold">Job Description:</span> {selected.jd || "-"}</p>
           </div>
         )}

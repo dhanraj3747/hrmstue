@@ -119,7 +119,22 @@ export default function CRMPage() {
   const [joinFilter, setJoinFilter] = useState("");
   const [companyOptions, setCompanyOptions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  const [crmAllowed, setCrmAllowed] = useState<boolean | null>(null); // null = checking
   const pageSize = 25;
+
+  // Enforce admin's CRM Access toggle (live from the DB, not the cached login).
+  useEffect(() => {
+    if (!email) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/employees?q=${encodeURIComponent(email)}`, { cache: "no-store" });
+        const data = await res.json().catch(() => ({ employees: [] }));
+        const me = (data.employees ?? []).find((e: { email: string; crmEnabled: boolean }) => e.email.toLowerCase() === email.toLowerCase());
+        // If there is an employee record, honour its crmEnabled flag; otherwise allow.
+        setCrmAllowed(me ? Boolean(me.crmEnabled) : true);
+      } catch { setCrmAllowed(true); }
+    })();
+  }, [email]);
 
   // Company / process suggestions come from real vendors + job openings (no test data).
   useEffect(() => {
@@ -241,6 +256,17 @@ export default function CRMPage() {
     { label: "Scheduled Interviews", value: scheduledInterviews, tone: "text-orange-500" },
     { label: "Joined This Month", value: joinedThisMonth, tone: "text-purple-600" },
   ];
+
+  if (crmAllowed === false) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-900">CRM</h2>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-6 text-sm text-amber-800">
+          Your CRM access has been disabled by the admin. Please contact your administrator if you believe this is a mistake.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

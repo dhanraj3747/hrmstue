@@ -102,7 +102,7 @@ export default function CandidateDashboardPage() {
         <StatCard label="This Month" value={formatWorkedMinutes(stats.monthWork)} color="text-orange-600" />
       </div>
 
-      <CrmSnapshot title="My CRM Summary" />
+      <CrmSnapshot title="My CRM Summary" owner={email} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

@@ -19,6 +19,7 @@ model Employee {
   designation String?
   phone       String?
   email       String    @unique
+  qualification String?
   doj         DateTime?
   status      String    @default("Active")
 
@@ -306,10 +307,13 @@ model JobOpening {
   ctc        String?
   takeHome   String?
   vendorPayment String?  // internal — shown to admin only, hidden from candidates
+  qualification String?
+  requirement   String? @db.Text
+  itType        String?  // IT, Non-IT
   location   String?
   jd         String?  @db.Text
   clauseDays Int      @default(45)
-  status     String   @default("Open")
+  status     String   @default("Active") // Active, Inactive, Other
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

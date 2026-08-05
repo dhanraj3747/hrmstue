@@ -23,12 +23,17 @@ function isThisMonth(v: string | null | undefined) {
   return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth();
 }
 
-export function CrmSnapshot({ title = "CRM Summary" }: { title?: string }) {
+// When `owner` is provided the summary is scoped to that user's own CRM
+// (e.g. an employee's dashboard). Without it, it aggregates all candidates (admin).
+export function CrmSnapshot({ title = "CRM Summary", owner }: { title?: string; owner?: string }) {
   const [metrics, setMetrics] = useState({ calls: 0, scheduled: 0, selected: 0, joined: 0 });
 
   useEffect(() => {
+    // A scoped view with no resolved owner yet means "nobody" → show zeros, don't fetch all.
+    if (owner === "") return;
     (async () => {
-      const res = await fetch("/api/candidates");
+      const url = owner ? `/api/candidates?owner=${encodeURIComponent(owner)}` : "/api/candidates";
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
       const rows = (data.candidates ?? []) as DbCandidate[];
@@ -39,7 +44,7 @@ export function CrmSnapshot({ title = "CRM Summary" }: { title?: string }) {
         joined: rows.filter((r) => r.status === "Joined" && (isThisMonth(r.doj) || isThisMonth(r.addedAt))).length,
       });
     })();
-  }, []);
+  }, [owner]);
 
   const cards = [
     { label: "Calls Today", value: metrics.calls, tone: "text-brand-red" },
