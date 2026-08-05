@@ -37,7 +37,11 @@ export function MessageCenter({
     if (res.ok) setMessages((await res.json()).messages ?? []);
   }, [meEmail]);
 
-  useEffect(() => { loadPartners(); }, [loadPartners]);
+  useEffect(() => {
+    loadPartners();
+    const t = setInterval(loadPartners, 10000); // dynamic — keep the list fresh
+    return () => clearInterval(t);
+  }, [loadPartners]);
 
   useEffect(() => {
     if (!selected) return;
@@ -94,7 +98,7 @@ export function MessageCenter({
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-gray-900">{c.name}</p>
-                      <p className="truncate text-xs text-gray-500">{p?.lastMessage ?? c.email}</p>
+                      <p className="truncate text-xs text-gray-500">{p?.lastMessage ?? "Start a conversation"}</p>
                     </div>
                     {p && p.unread > 0 && (
                       <span className="ml-2 rounded-full bg-brand-red px-2 py-0.5 text-xs font-semibold text-white">{p.unread}</span>
@@ -115,7 +119,6 @@ export function MessageCenter({
           <>
             <div className="border-b border-gray-100 px-4 py-3">
               <p className="text-sm font-semibold text-gray-900">{selected.name}</p>
-              <p className="text-xs text-gray-500">{selected.email}</p>
             </div>
             <div className="flex-1 space-y-2 overflow-auto p-4">
               {messages.length === 0 ? (

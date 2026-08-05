@@ -13,10 +13,13 @@ export function AdminMessageMonitor() {
   const [q, setQ] = useState("");
 
   useEffect(() => {
-    (async () => {
-      const res = await fetch("/api/messages?all=1");
+    const load = async () => {
+      const res = await fetch("/api/messages?all=1", { cache: "no-store" });
       if (res.ok) { const d = await res.json(); setMessages(d.messages ?? []); setNames(d.names ?? {}); }
-    })();
+    };
+    load();
+    const t = setInterval(load, 10000); // dynamic — refresh conversations live
+    return () => clearInterval(t);
   }, []);
 
   const nameOf = (email: string) => names[email.toLowerCase()] || email;
